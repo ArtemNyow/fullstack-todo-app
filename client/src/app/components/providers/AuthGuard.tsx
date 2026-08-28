@@ -27,7 +27,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   }, [router]);
 
   if (isChecking) {
-    return <main className="auth-loading" aria-busy="true" />;
+    return null;
   }
 
   return children;

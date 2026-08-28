@@ -39,9 +39,9 @@ const validateForm = (email: string, password: string): FormErrors => {
 
 export default function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
-  const [isChecking, setIsChecking] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<keyof FormErrors, boolean>>({
     email: false,
@@ -64,14 +64,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       router.replace("/");
       return;
     }
-
-    const checkTimer = window.setTimeout(() => setIsChecking(false), 0);
-    return () => window.clearTimeout(checkTimer);
   }, [router]);
-
-  if (isChecking) {
-    return <main className="auth-loading" aria-busy="true" />;
-  }
 
   const isRegister = mode === "register";
 
@@ -137,22 +130,35 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
           <div className="form-group">
             <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(event) => handlePasswordChange(event.target.value)}
-              onBlur={() => {
-                setTouched((current) => ({ ...current, password: true }));
-                setErrors((current) => ({
-                  ...current,
-                  password: validateForm(email, password).password,
-                }));
-              }}
-              placeholder="••••••••"
-              aria-invalid={Boolean(touched.password && errors.password)}
-              aria-describedby={errors.password ? "password-error" : undefined}
-            />
+            <div className="password-field">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => handlePasswordChange(event.target.value)}
+                onBlur={() => {
+                  setTouched((current) => ({ ...current, password: true }));
+                  setErrors((current) => ({
+                    ...current,
+                    password: validateForm(email, password).password,
+                  }));
+                }}
+                placeholder="••••••••"
+                aria-invalid={Boolean(touched.password && errors.password)}
+                aria-describedby={
+                  errors.password ? "password-error" : undefined
+                }
+              />
+              <button
+                className="password-toggle"
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
             {touched.password && errors.password && (
               <span className="field-error" id="password-error">
                 {errors.password}
