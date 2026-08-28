@@ -5,7 +5,9 @@ import { AuthRequest } from "../middleware/authMiddleware.js";
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const email = typeof req.body.email === "string" ? req.body.email : "";
+    const password =
+      typeof req.body.password === "string" ? req.body.password : "";
 
     const result = await registerUser(email, password);
 
@@ -21,7 +23,9 @@ export const register = async (req: Request, res: Response) => {
 };
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const email = typeof req.body.email === "string" ? req.body.email : "";
+    const password =
+      typeof req.body.password === "string" ? req.body.password : "";
 
     const result = await loginUser(email, password);
 

@@ -4,8 +4,12 @@ import { User } from "../models/index.js";
 import { JWT_SECRET } from "../config/env.js";
 
 export const registerUser = async (email: string, password: string) => {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  validateCredentials(normalizedEmail, password);
+
   const existingUser = await User.findOne({
-    where: { email },
+    where: { email: normalizedEmail },
   });
 
   if (existingUser) {
@@ -15,7 +19,7 @@ export const registerUser = async (email: string, password: string) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await User.create({
-    email,
+    email: normalizedEmail,
     password: hashedPassword,
   });
 
@@ -39,8 +43,12 @@ export const registerUser = async (email: string, password: string) => {
   };
 };
 export const loginUser = async (email: string, password: string) => {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  validateCredentials(normalizedEmail, password);
+
   const user = await User.findOne({
-    where: { email },
+    where: { email: normalizedEmail },
   });
 
   if (!user) {
@@ -71,4 +79,14 @@ export const loginUser = async (email: string, password: string) => {
       email: user.email,
     },
   };
+};
+
+const validateCredentials = (email: string, password: string) => {
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+    throw new Error("A valid email is required");
+  }
+
+  if (password.length < 6) {
+    throw new Error("Password must be at least 6 characters");
+  }
 };

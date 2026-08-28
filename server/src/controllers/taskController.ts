@@ -2,6 +2,21 @@ import { Response } from "express";
 import { Task } from "../models/index.js";
 import { AuthRequest } from "../middleware/authMiddleware.js";
 
+const taskStatuses = ["todo", "in progress", "done"] as const;
+type TaskStatus = (typeof taskStatuses)[number];
+
+const getTaskId = (value: string | string[]) => {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+};
+
+const isTaskStatus = (value: unknown): value is TaskStatus =>
+  typeof value === "string" && taskStatuses.includes(value as TaskStatus);
+
 export const createTask = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
@@ -13,9 +28,22 @@ export const createTask = async (req: AuthRequest, res: Response) => {
 
     const { title, description, status } = req.body;
 
+    if (typeof title !== "string" || !title.trim()) {
+      res.status(400).json({ message: "Task title is required" });
+      return;
+    }
+
+    if (status !== undefined && !isTaskStatus(status)) {
+      res.status(400).json({ message: "Invalid task status" });
+      return;
+    }
+
     const task = await Task.create({
-      title,
-      description: description ?? null,
+      title: title.trim(),
+      description:
+        typeof description === "string" && description.trim()
+          ? description.trim()
+          : null,
       status: status ?? "todo",
       userId: req.user.userId,
     });
@@ -43,14 +71,19 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
 
     const { status } = req.query;
 
+    if (status !== undefined && !isTaskStatus(status)) {
+      res.status(400).json({ message: "Invalid task status" });
+      return;
+    }
+
     const where: {
       userId: number;
-      status?: "todo" | "in progress" | "done";
+      status?: TaskStatus;
     } = {
       userId: req.user.userId,
     };
 
-    if (status === "todo" || status === "in progress" || status === "done") {
+    if (status !== undefined) {
       where.status = status;
     }
 
@@ -78,9 +111,16 @@ export const getTaskById = async (req: AuthRequest, res: Response) => {
       return;
     }
 
+    const id = getTaskId(req.params.id);
+
+    if (!id) {
+      res.status(400).json({ message: "Invalid task id" });
+      return;
+    }
+
     const task = await Task.findOne({
       where: {
-        id: Number(req.params.id),
+        id,
         userId: req.user.userId,
       },
     });
@@ -110,9 +150,16 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
       return;
     }
 
+    const id = getTaskId(req.params.id);
+
+    if (!id) {
+      res.status(400).json({ message: "Invalid task id" });
+      return;
+    }
+
     const task = await Task.findOne({
       where: {
-        id: Number(req.params.id),
+        id,
         userId: req.user.userId,
       },
     });
@@ -127,7 +174,7 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
     const { title, description, status } = req.body;
 
     if (status !== undefined) {
-      if (status !== "todo" && status !== "in progress" && status !== "done") {
+      if (!isTaskStatus(status)) {
         res.status(400).json({
           message: "Invalid task status",
         });
@@ -138,11 +185,20 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
     }
 
     if (title !== undefined) {
-      task.title = title;
+      if (typeof title !== "string" || !title.trim()) {
+        res.status(400).json({ message: "Task title is required" });
+        return;
+      }
+      task.title = title.trim();
     }
 
     if (description !== undefined) {
-      task.description = description;
+      if (description !== null && typeof description !== "string") {
+        res.status(400).json({ message: "Invalid task description" });
+        return;
+      }
+      task.description =
+        typeof description === "string" ? description.trim() : null;
     }
 
     await task.save();
@@ -165,9 +221,16 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
       return;
     }
 
+    const id = getTaskId(req.params.id);
+
+    if (!id) {
+      res.status(400).json({ message: "Invalid task id" });
+      return;
+    }
+
     const task = await Task.findOne({
       where: {
-        id: Number(req.params.id),
+        id,
         userId: req.user.userId,
       },
     });

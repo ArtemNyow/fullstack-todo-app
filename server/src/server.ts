@@ -1,11 +1,16 @@
 import express from "express";
 import sequelize from "./config/database.js";
 import "./models/index.js";
-import { PORT } from "./config/env.js";
+import { CLIENT_URL, PORT } from "./config/env.js";
 import authRoutes from "./routes/authRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
+import cors from "cors";
 const app = express();
-
+app.use(
+  cors({
+    origin: CLIENT_URL,
+  }),
+);
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
