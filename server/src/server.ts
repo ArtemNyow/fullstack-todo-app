@@ -1,10 +1,12 @@
 import express from "express";
-import sequelize from "./config/database";
-import { start } from "node:repl";
+import sequelize from "./config/database.js";
+import "./models/index.js";
 
 const app = express();
 
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
+
+app.use(express.json());
 
 app.get("/", (_req, res) => {
   res.json({
@@ -15,6 +17,7 @@ app.get("/", (_req, res) => {
 const startServer = async () => {
   try {
     await sequelize.authenticate();
+    await sequelize.sync();
     console.log("Database connection established successfully.");
 
     app.listen(PORT, () => {
