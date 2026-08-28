@@ -1,10 +1,9 @@
 import express from "express";
 import sequelize from "./config/database.js";
 import "./models/index.js";
+import { PORT } from "./config/env.js";
 
 const app = express();
-
-const PORT = 5000;
 
 app.use(express.json());
 
