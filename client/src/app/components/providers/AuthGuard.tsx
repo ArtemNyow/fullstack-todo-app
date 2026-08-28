@@ -18,6 +18,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
     if (!token) {
       router.replace("/login");
+      return;
     }
 
     const checkTimer = window.setTimeout(() => setIsChecking(false), 0);
@@ -26,7 +27,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   }, [router]);
 
   if (isChecking) {
-    return null;
+    return <main className="auth-loading" aria-busy="true" />;
   }
 
   return children;
